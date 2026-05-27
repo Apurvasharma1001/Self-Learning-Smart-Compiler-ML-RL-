@@ -1,4 +1,4 @@
-<![CDATA[# 🧠 Self-Learning Smart Compiler (ML + RL)
+# 🧠 Self-Learning Smart Compiler (ML + RL)
 
 <div align="center">
 
@@ -551,4 +551,4 @@ This project is developed for **educational purposes** as part of a PBL (Project
 *Built with ❤️ and a lot of compiler theory.*
 
 </div>
-]]>
+
