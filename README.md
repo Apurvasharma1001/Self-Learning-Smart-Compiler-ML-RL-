@@ -397,6 +397,7 @@ Mini-C is a statically-typed, imperative language — a subset of C designed for
 
 ### Supported Features
 
+  
 | Feature | Syntax |
 |---------|--------|
 | **Types** | `int`, `float`, `void`, `bool`, `char` |
