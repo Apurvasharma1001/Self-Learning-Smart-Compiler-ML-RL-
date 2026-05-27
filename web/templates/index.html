@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini-C Compiler — ML/RL Adaptive Optimization</title>
+    <meta name="description" content="Interactive Mini-C compiler with ML and RL-based adaptive optimization. Compare normal vs optimized compilation in real-time.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/elegant.min.css">
+
+    <style>
+        /* ===== LIGHT THEME (default) ===== */
+        [data-theme="light"] {
+            --bg-primary: #f8f9fb;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f1f3f8;
+            --bg-code: #f4f5f7;
+            --accent-primary: #4f6ef7;
+            --accent-secondary: #6c5ce7;
+            --accent-success: #0d9f6e;
+            --accent-warning: #d97706;
+            --accent-danger: #dc2626;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.07);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+            --radius: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-bg: rgba(255,255,255,0.85);
+            --terminal-bg: #1e1e2e;
+            --terminal-text: #a6e3a1;
+            --terminal-header-bg: #181825;
+            --terminal-border: #313244;
+            --bar-normal-from: #cbd5e1;
+            --bar-normal-to: #94a3b8;
+            --bar-normal-text: #475569;
+            --bar-opt-text: #ffffff;
+        }
+
+        /* ===== DARK THEME ===== */
+        [data-theme="dark"] {
+            --bg-primary: #0f1117;
+            --bg-secondary: #181b23;
+            --bg-card: #1e2130;
+            --bg-card-hover: #252839;
+            --bg-code: #141620;
+            --accent-primary: #6c8cff;
+            --accent-secondary: #a78bfa;
+            --accent-success: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-danger: #f87171;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2a2d3a;
+            --border-strong: #3a3d4e;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+            --radius: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-bg: rgba(24,27,35,0.9);
+            --terminal-bg: #0c0e14;
+            --terminal-text: #a6e3a1;
+            --terminal-header-bg: #101218;
+            --terminal-border: #1e2130;
+            --bar-normal-from: #334155;
+            --bar-normal-to: #475569;
+            --bar-normal-text: #94a3b8;
+            --bar-opt-text: #0f1117;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--accent-primary);
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 400;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sample-select {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .sample-select:hover {
+            border-color: var(--accent-primary);
+        }
+        .sample-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            width: 40px; height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+        .theme-toggle:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: rotate(15deg);
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            height: calc(100vh - 60px);
+        }
+
+        /* ===== EDITOR PANEL ===== */
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-title .icon { font-size: 15px; }
+
+        .editor-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 13.5px !important;
+            line-height: 1.65 !important;
+            transition: background 0.3s ease;
+        }
+
+        /* ===== COMPILE BUTTONS ===== */
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn-normal {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-normal:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .btn-ml {
+            background: var(--accent-secondary);
+            color: white;
+        }
+        .btn-ml:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3);
+        }
+
+        .btn-rl {
+            background: var(--accent-primary);
+            color: white;
+        }
+        .btn-rl:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(79, 110, 247, 0.3);
+        }
+
+        .btn-compare {
+            background: var(--accent-success);
+            color: white;
+        }
+        .btn-compare:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(13, 159, 110, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn .spinner {
+            width: 12px; height: 12px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+        .btn.loading .spinner { display: block; }
+        .btn.loading .btn-text { display: none; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== OUTPUT PANEL ===== */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1px;
+            padding: 0 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            transition: var(--transition);
+        }
+
+        .tab {
+            padding: 9px 14px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .tab:hover { color: var(--text-secondary); }
+        .tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            background: var(--bg-primary);
+            transition: var(--transition);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .tab-pane.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .code-output {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.65;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            white-space: pre-wrap;
+            color: var(--text-primary);
+            max-height: 100%;
+            overflow-y: auto;
+            transition: var(--transition);
+        }
+
+        /* ===== METRICS DASHBOARD ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .metric-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .metric-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .metric-label {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        .metric-card.improvement .metric-value {
+            color: var(--accent-success);
+        }
+
+        /* ===== COMPARISON BARS ===== */
+        .comparison-bar { margin: 10px 0; }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .bar-track {
+            height: 22px;
+            background: var(--bg-code);
+            border-radius: 11px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 11px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 10.5px;
+            font-weight: 600;
+        }
+
+        .bar-fill.normal {
+            background: linear-gradient(90deg, var(--bar-normal-from), var(--bar-normal-to));
+            color: var(--bar-normal-text);
+        }
+
+        .bar-fill.optimized {
+            background: linear-gradient(90deg, var(--accent-success), #34d399);
+            color: var(--bar-opt-text);
+        }
+
+        /* ===== PASSES CHIPS ===== */
+        .passes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .pass-chip {
+            padding: 4px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            font-size: 11.5px;
+            color: var(--accent-secondary);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .pass-chip:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent-success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { font-size: 44px; margin-bottom: 14px; opacity: 0.25; }
+        .empty-state .message { font-size: 13px; }
+
+        /* ===== SECTION TITLES ===== */
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 14px 0 8px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ===== TERMINAL OUTPUT ===== */
+        .output-terminal {
+            background: var(--terminal-bg);
+            border: 1px solid var(--terminal-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: var(--terminal-header-bg);
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--terminal-border);
+        }
+
+        .terminal-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+
+        .terminal-title {
+            color: #6c7086;
+            font-size: 11.5px;
+            margin-left: 6px;
+            font-weight: 500;
+        }
+
+        .terminal-body {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            padding: 16px;
+            color: var(--terminal-text);
+            white-space: pre-wrap;
+            min-height: 180px;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <span class="logo"><span class="logo-icon">⚡</span>Mini-C Compiler</span>
+            <span class="subtitle">ML/RL Adaptive Optimization</span>
+        </div>
+        <div class="header-right">
+            <select class="sample-select" id="sample-selector" onchange="loadSample()">
+                <option value="">📂 Load Sample...</option>
+            </select>
+            <div class="btn-group">
+                <button class="btn btn-normal" onclick="compile('normal')" id="btn-normal">
+                    <span class="spinner"></span>
+                    <span class="btn-text">▶ Normal</span>
+                </button>
+                <button class="btn btn-ml" onclick="compile('ml')" id="btn-ml">
+                    <span class="spinner"></span>
+                    <span class="btn-text">🧠 ML</span>
+                </button>
+                <button class="btn btn-rl" onclick="compile('rl')" id="btn-rl">
+                    <span class="spinner"></span>
+                    <span class="btn-text">🎯 RL</span>
+                </button>
+                <button class="btn btn-compare" onclick="compareAll()" id="btn-compare">
+                    <span class="spinner"></span>
+                    <span class="btn-text">⚖ Compare</span>
+                </button>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+                🌙
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Editor Panel -->
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span class="panel-title"><span class="icon">📝</span> Source Code (Mini-C)</span>
+            </div>
+            <div class="editor-wrapper">
+                <textarea id="code-editor">/* Mini-C Compiler with print support! */
+/* Click any compile button, then check the Output tab. */
+
+int main() {
+    int a = 3 + 5;
+    int b = a * 2;
+    int c = 10 - 4;
+
+    print(a);
+    print(b);
+    print(c);
+    print(a + b + c);
+
+    int unused = 99;
+    return a + b;
+}</textarea>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="output-panel">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('metrics')" id="tab-metrics">📊 Metrics</div>
+                <div class="tab" onclick="switchTab('output')" id="tab-output">▶ Output</div>
+                <div class="tab" onclick="switchTab('tac-before')" id="tab-tac-before">📋 TAC (Original)</div>
+                <div class="tab" onclick="switchTab('tac-after')" id="tab-tac-after">✨ TAC (Optimized)</div>
+                <div class="tab" onclick="switchTab('assembly')" id="tab-assembly">🔧 Assembly</div>
+                <div class="tab" onclick="switchTab('ast')" id="tab-ast">🌳 AST</div>
+            </div>
+            <div class="tab-content">
+                <!-- Metrics Tab -->
+                <div class="tab-pane active" id="pane-metrics">
+                    <div class="empty-state" id="metrics-empty">
+                        <div class="icon">⚡</div>
+                        <div class="message">Click a compile button to see results</div>
+                    </div>
+                    <div id="metrics-content" style="display:none;">
+                        <div class="metrics-grid" id="metrics-grid"></div>
+                        <div class="section-title">Instruction Count Comparison</div>
+                        <div id="comparison-bars"></div>
+                        <div id="passes-section" style="display:none;">
+                            <div class="section-title">Optimization Passes Applied</div>
+                            <div class="passes-list" id="passes-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Program Output -->
+                <div class="tab-pane" id="pane-output">
+                    <div class="output-terminal">
+                        <div class="terminal-header">
+                            <span class="terminal-dot red"></span>
+                            <span class="terminal-dot yellow"></span>
+                            <span class="terminal-dot green"></span>
+                            <span class="terminal-title">Program Output</span>
+                        </div>
+                        <pre class="terminal-body" id="program-output">Run a program with print() to see output here.
+
+Example:
+  print(42);
+  print(x + y);</pre>
+                    </div>
+                </div>
+
+                <!-- TAC Before -->
+                <div class="tab-pane" id="pane-tac-before">
+                    <pre class="code-output" id="tac-before-output">Compile to see TAC output...</pre>
+                </div>
+
+                <!-- TAC After -->
+                <div class="tab-pane" id="pane-tac-after">
+                    <pre class="code-output" id="tac-after-output">Use ML or RL mode to see optimized TAC...</pre>
+                </div>
+
+                <!-- Assembly -->
+                <div class="tab-pane" id="pane-assembly">
+                    <pre class="code-output" id="assembly-output">Compile to see assembly output...</pre>
+                </div>
+
+                <!-- AST -->
+                <div class="tab-pane" id="pane-ast">
+                    <pre class="code-output" id="ast-output">Compile to see AST...</pre>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="status-text">Ready</span>
+                </div>
+                <span id="compile-time">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
+    <script>
+        // ===== Theme Management =====
+        function getPreferredTheme() {
+            const saved = localStorage.getItem('mini-c-theme');
+            if (saved) return saved;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const btn = document.getElementById('theme-toggle');
+            btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+            btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+
+            // Switch CodeMirror theme
+            if (window._editor) {
+                window._editor.setOption('theme', theme === 'dark' ? 'material-darker' : 'elegant');
+            }
+
+            localStorage.setItem('mini-c-theme', theme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        }
+
+        // Apply theme before editor init
+        applyTheme(getPreferredTheme());
+
+        // ===== CodeMirror Editor =====
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'text/x-csrc',
+            theme: currentTheme === 'dark' ? 'material-darker' : 'elegant',
+            lineNumbers: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            tabSize: 4,
+            indentWithTabs: false,
+            lineWrapping: false,
+        });
+        window._editor = editor;
+
+        // ===== Load Samples =====
+        async function loadSamples() {
+            try {
+                const resp = await fetch('/samples');
+                const samples = await resp.json();
+                const select = document.getElementById('sample-selector');
+                for (const [key, val] of Object.entries(samples)) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = val.name;
+                    select.appendChild(opt);
+                }
+                window._samples = samples;
+            } catch (e) {
+                console.error('Failed to load samples:', e);
+            }
+        }
+
+        function loadSample() {
+            const key = document.getElementById('sample-selector').value;
+            if (key && window._samples && window._samples[key]) {
+                editor.setValue(window._samples[key].code);
+            }
+        }
+
+        // ===== Tab Switching =====
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            document.getElementById('pane-' + name).classList.add('active');
+        }
+
+        // ===== Compile =====
+        let lastResult = null;
+
+        async function compile(mode) {
+            const btn = document.getElementById('btn-' + mode);
+            btn.classList.add('loading');
+            setStatus('Compiling (' + mode + ')...');
+
+            try {
+                const resp = await fetch('/compile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: editor.getValue(), mode: mode }),
+                });
+                const data = await resp.json();
+                lastResult = data;
+                displayResult(data);
+
+                if (data.success) {
+                    setStatus('Compilation successful (' + mode + ' mode)');
+                    document.getElementById('compile-time').textContent = data.compile_time_ms + ' ms';
+                } else {
+                    setStatus('Compilation failed');
+                }
+            } catch (err) {
+                setStatus('Error: ' + err.message);
+            }
+
+            btn.classList.remove('loading');
+        }
+
+        async function compareAll() {
+            const btn = document.getElementById('btn-compare');
+            btn.classList.add('loading');
+            setStatus('Compiling all modes...');
+
+            try {
+                const resp = await fetch('/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: editor.getValue() }),
+                });
+                const data = await resp.json();
+                displayComparison(data);
+                setStatus('Comparison complete');
+            } catch (err) {
+                setStatus('Error: ' + err.message);
+            }
+
+            btn.classList.remove('loading');
+        }
+
+        // ===== Display Results =====
+        function displayResult(data) {
+            document.getElementById('metrics-empty').style.display = 'none';
+            document.getElementById('metrics-content').style.display = 'block';
+
+            // TAC outputs
+            document.getElementById('tac-before-output').textContent =
+                data.tac_original || 'No TAC generated';
+            document.getElementById('tac-after-output').textContent =
+                data.tac_optimized || 'No optimization applied (use ML or RL mode)';
+            document.getElementById('assembly-output').textContent =
+                data.assembly || 'No assembly generated';
+            document.getElementById('ast-output').textContent =
+                data.ast || 'No AST generated';
+            document.getElementById('program-output').textContent =
+                data.program_output || 'No output (add print() calls to see output)';
+
+            if (!data.success) {
+                document.getElementById('tac-before-output').textContent =
+                    'Errors:\n' + (data.errors || []).join('\n');
+                return;
+            }
+
+            // Metrics
+            const m = data.tac_original_metrics || {};
+            const om = data.tac_optimized_metrics || {};
+            const imp = data.improvement || {};
+
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsGrid.innerHTML = '';
+
+            addMetric(metricsGrid, data.token_count, 'Tokens');
+            addMetric(metricsGrid, m.total_instructions || 0, 'TAC Instructions');
+            addMetric(metricsGrid, m.temp_variable_count || 0, 'Temp Variables');
+            addMetric(metricsGrid, (data.assembly_metrics || {}).total_instructions || 0, 'ASM Instructions');
+            addMetric(metricsGrid, data.compile_time_ms + ' ms', 'Compile Time');
+
+            if (imp.percentage !== undefined) {
+                addMetric(metricsGrid, imp.percentage + '%', 'Improvement', true);
+                addMetric(metricsGrid, om.total_instructions || 0, 'Optimized TAC');
+                addMetric(metricsGrid, imp.instruction_reduction || 0, 'Instructions Saved');
+            }
+
+            // Comparison bars
+            const barsDiv = document.getElementById('comparison-bars');
+            barsDiv.innerHTML = '';
+
+            const origCount = m.total_instructions || 1;
+            const optCount = om.total_instructions || origCount;
+
+            addBar(barsDiv, 'Original', origCount, origCount, 'normal');
+            if (data.mode !== 'normal' && imp.percentage !== undefined) {
+                addBar(barsDiv, 'Optimized (' + data.mode.toUpperCase() + ')', optCount, origCount, 'optimized');
+            }
+
+            // Passes
+            const passesSection = document.getElementById('passes-section');
+            const passesList = document.getElementById('passes-list');
+            if (data.passes_applied && data.passes_applied.length > 0) {
+                passesSection.style.display = 'block';
+                passesList.innerHTML = '';
+                data.passes_applied.forEach(p => {
+                    const chip = document.createElement('span');
+                    chip.className = 'pass-chip';
+                    chip.textContent = p.replace(/_/g, ' ');
+                    passesList.appendChild(chip);
+                });
+            } else {
+                passesSection.style.display = 'none';
+            }
+
+            switchTab('metrics');
+        }
+
+        function displayComparison(data) {
+            document.getElementById('metrics-empty').style.display = 'none';
+            document.getElementById('metrics-content').style.display = 'block';
+
+            const normal = data.normal || {};
+            const ml = data.ml || {};
+            const rl = data.rl || {};
+
+            // Display best result in detail tabs
+            const best = (ml.improvement?.percentage || 0) >= (rl.improvement?.percentage || 0) ? ml : rl;
+            document.getElementById('tac-before-output').textContent = normal.tac_original || '';
+            document.getElementById('tac-after-output').textContent = best.tac_optimized || '';
+            document.getElementById('assembly-output').textContent = best.assembly || '';
+            document.getElementById('ast-output').textContent = normal.ast || '';
+            document.getElementById('program-output').textContent = normal.program_output || best.program_output || 'No output';
+
+            const nm = normal.tac_original_metrics || {};
+            const mm = ml.tac_optimized_metrics || {};
+            const rm = rl.tac_optimized_metrics || {};
+
+            // Metrics grid
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsGrid.innerHTML = '';
+
+            addMetric(metricsGrid, nm.total_instructions || 0, 'Normal TAC');
+            addMetric(metricsGrid, mm.total_instructions || nm.total_instructions || 0, 'ML TAC');
+            addMetric(metricsGrid, rm.total_instructions || nm.total_instructions || 0, 'RL TAC');
+            addMetric(metricsGrid, (ml.improvement?.percentage || 0) + '%', 'ML Improvement', true);
+            addMetric(metricsGrid, (rl.improvement?.percentage || 0) + '%', 'RL Improvement', true);
+
+            const totalTime = (normal.compile_time_ms || 0) + (ml.compile_time_ms || 0) + (rl.compile_time_ms || 0);
+            addMetric(metricsGrid, totalTime.toFixed(1) + ' ms', 'Total Time');
+
+            // Comparison bars
+            const barsDiv = document.getElementById('comparison-bars');
+            barsDiv.innerHTML = '';
+            const origCount = nm.total_instructions || 1;
+            addBar(barsDiv, 'Normal', origCount, origCount, 'normal');
+            addBar(barsDiv, 'ML Optimized', mm.total_instructions || origCount, origCount, 'optimized');
+            addBar(barsDiv, 'RL Optimized', rm.total_instructions || origCount, origCount, 'optimized');
+
+            // Passes
+            const passesSection = document.getElementById('passes-section');
+            const passesList = document.getElementById('passes-list');
+            const allPasses = [...new Set([...(ml.passes_applied || []), ...(rl.passes_applied || [])])];
+            if (allPasses.length > 0) {
+                passesSection.style.display = 'block';
+                passesList.innerHTML = '';
+                allPasses.forEach(p => {
+                    const chip = document.createElement('span');
+                    chip.className = 'pass-chip';
+                    chip.textContent = p.replace(/_/g, ' ');
+                    passesList.appendChild(chip);
+                });
+            }
+
+            document.getElementById('compile-time').textContent = totalTime.toFixed(1) + ' ms';
+            switchTab('metrics');
+        }
+
+        // ===== Helper Functions =====
+        function addMetric(container, value, label, isImprovement = false) {
+            const card = document.createElement('div');
+            card.className = 'metric-card' + (isImprovement ? ' improvement' : '');
+            card.innerHTML = '<div class="metric-value">' + value + '</div>'
+                           + '<div class="metric-label">' + label + '</div>';
+            container.appendChild(card);
+        }
+
+        function addBar(container, label, count, maxCount, type) {
+            const pct = maxCount > 0 ? Math.max(5, (count / maxCount) * 100) : 100;
+            const bar = document.createElement('div');
+            bar.className = 'comparison-bar';
+            bar.innerHTML = '<div class="bar-label"><span>' + label + '</span><span>' + count + ' instructions</span></div>'
+                          + '<div class="bar-track"><div class="bar-fill ' + type + '" style="width:0%">' + count + '</div></div>';
+            container.appendChild(bar);
+            // Animate
+            setTimeout(() => {
+                bar.querySelector('.bar-fill').style.width = pct + '%';
+            }, 100);
+        }
+
+        function setStatus(text) {
+            document.getElementById('status-text').textContent = text;
+        }
+
+        // ===== Init =====
+        loadSamples();
+    </script>
+</body>
+</html>

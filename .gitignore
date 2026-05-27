@@ -1,0 +1,81 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# ========================
+# ML/RL Trained Models
+# ========================
+# Keep trained models tracked (they're small and needed to run the project)
+# Uncomment below to ignore them:
+# optimizer/ml/trained_model_model.pkl
+# optimizer/ml/trained_model.json
+# optimizer/rl/q_table.json
+
+# ========================
+# PLY (Parser Generator)
+# ========================
+parser.out
+parser/parser.out
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# ========================
+# OS generated files
+# ========================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ========================
+# Jupyter Notebook
+# ========================
+.ipynb_checkpoints/
+
+# ========================
+# Testing / Coverage
+# ========================
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+*.py,cover
+.tox/
+.nox/
+
+# ========================
+# Misc
+# ========================
+*.log
+*.bak
+*.tmp
+*.temp
